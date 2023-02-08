@@ -3,6 +3,10 @@ import os
 from Bio.PDB import PDBParser
 from Bio.SeqUtils import seq1 # convert 3 letter AA seq to 1 letter AA seq
 
+# ================================================================================================================================
+#   Checking PDB Sequences
+# ================================================================================================================================
+
 def get1LetterPrimarySequenceFromModel(model):
     """Requires seq1 from bio.SeqUtils, model from bio.PDB.PDBParser"""
     return seq1("".join([r.get_resname() for r in list(model.get_residues())]))
@@ -99,6 +103,49 @@ def checkAFPDBSequenceForDataFrame(dataframe, pathToPDBRoot, pdbParser, pdbPathF
     # Join Match Info to Original DF
     return pd.merge(dataframe, pd.DataFrame(matchInfo), left_on=sequenceFeatureName, right_on=sequenceFeatureName)
 
+# ================================================================================================================================
+#   RUN (End to end)
+# ================================================================================================================================
+
+def CheckAlphaFoldPDBSequences_EndToEnd(CONFIG):
+    # Unpack CONFIG file
+    SOURCE_SEQUENCES_PATH, ID_FEATURE_NAME, SEQUENCE_FEATURE_NAME, AF_PDB_DATAFRAME, AF_PDB_ROOT_DIR, OUTPUT_SAVEPATH = utility_UnPackConfig(CONFIG)
+
+    # Get PDB parser
+    pdbParser = PDBParser()
+
+    # Load Source and PDM paths
+    sourceProteinData = pd.read_csv(SOURCE_SEQUENCES_PATH)
+    afPDBData = pd.read_csv(AF_PDB_DATAFRAME)
+    print(f'{len(sourceProteinData)} protein sequences loaded, {len(afPDBData)} AF PDB entries to check')
+
+    # Merge
+    merged = sourceProteinData.merge(afPDBData, left_on=ID_FEATURE_NAME, right_on='uniprot_ID_source')
+    assert len(merged)==len(sourceProteinData), "Merging with PDB information has led to duplications! Likely PDB info csv contains too many uniprot IDs"
+
+    # Check Sequences
+    print('Checking Sequences')
+    matchedDF = checkAFPDBSequenceForDataFrame(merged, AF_PDB_ROOT_DIR, pdbParser, sequenceFeatureName=SEQUENCE_FEATURE_NAME)
+
+    # Save output
+    matchedDF.to_csv(OUTPUT_SAVEPATH, index=False)
+
+    # Small debug output
+    numSequences = len(matchedDF)
+    numExactMatches = sum(matchedDF['ExactMatch'].values)
+    numTruncatedMatches = sum(matchedDF['TruncatedMatch'].values)
+    
+    PDBs = matchedDF['PDB_path']
+    noPDBs = [m for m in PDBs if not isinstance(m, str)]
+    PDB_mask = [isinstance(m, str) for m in matchedDF['PDB_path']]
+    numNoMatchInPDB = sum(matchedDF[PDB_mask]['NoMatch'].values)
+    print(f'{numSequences} Sequences ran\n\t{numExactMatches} exact sequence matches in PDB\n\t{numTruncatedMatches} truncated sequence matches in PDB\n\t{numNoMatchInPDB} no sequence match in PDB\n\t{len(noPDBs)} PDB available')
+
+
+# ================================================================================================================================
+#   UTILITIES (Small functions either to tidy code for readability, or of limited/specific use)
+# ================================================================================================================================
+
 def utility_getNoPDBDict():
     return {'NoMatch': True,
             'ExactMatch': False, 
@@ -122,22 +169,3 @@ def utility_UnPackConfig(CONFIG):
     OUTPUT_SAVEPATH = CONFIG['OUTPUT_SAVEPATH']
     return SOURCE_SEQUENCES_PATH, ID_FEATURE_NAME, SEQUENCE_FEATURE_NAME, AF_PDB_DATAFRAME, AF_PDB_ROOT_DIR, OUTPUT_SAVEPATH
 
-def CheckAlphaFoldPDBSequences_EndToEnd(CONFIG):
-    # Unpack CONFIG file
-    SOURCE_SEQUENCES_PATH, ID_FEATURE_NAME, SEQUENCE_FEATURE_NAME, AF_PDB_DATAFRAME, AF_PDB_ROOT_DIR, OUTPUT_SAVEPATH = utility_UnPackConfig(CONFIG)
-
-    # Get PDB parser
-    pdbParser = PDBParser()
-
-    # Load Source and PDM paths
-    sourceProteinData = pd.read_csv(SOURCE_SEQUENCES_PATH)
-    afPDBData = pd.read_csv(AF_PDB_DATAFRAME)
-
-    # Merge
-    merged = sourceProteinData.merge(afPDBData, left_on=ID_FEATURE_NAME, right_on='uniprot_ID_source')
-
-    # Check Sequences
-    matchedDF = checkAFPDBSequenceForDataFrame(merged, AF_PDB_ROOT_DIR, pdbParser, sequenceFeatureName=SEQUENCE_FEATURE_NAME)
-
-    # Save output
-    matchedDF.to_csv(OUTPUT_SAVEPATH, index=False)

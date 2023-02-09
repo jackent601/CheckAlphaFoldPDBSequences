@@ -31,10 +31,10 @@ def checkAFPDBSequence(sourceSequence, AF_PDB_obj, debug = True):
                 'TruncatedMatch': False,
                 'AFTruncated':False,
                 'SourceTruncated':False,
-                'AFStartResidue': 1, 
-                'AFEndResidue':len(AFprimarySeq),
-                'SourceStartResidue':1, 
-                'SourceEndResidue':len(sourceSequence)}
+                'AFStartResidueOverlap': 1, 
+                'AFEndResidueOverlap':len(AFprimarySeq),
+                'SourceStartResidueOverlap':1, 
+                'SourceEndResidueOverlap':len(sourceSequence)}
 
     # AF truncated sequence, but perfect match for what exists
     elif len(AFprimarySeq) < len(sourceSequence) and AFprimarySeq in sourceSequence:
@@ -46,10 +46,10 @@ def checkAFPDBSequence(sourceSequence, AF_PDB_obj, debug = True):
                 'TruncatedMatch': True,
                 'AFTruncated':True,
                 'SourceTruncated':False,
-                'AFStartResidue': 1, 
-                'AFEndResidue':len(AFprimarySeq),
-                'SourceStartResidue':1, 
-                'SourceEndResidue':len(AFprimarySeq)}
+                'AFStartResidueOverlap': 1, 
+                'AFEndResidueOverlap':len(AFprimarySeq),
+                'SourceStartResidueOverlap':1, 
+                'SourceEndResidueOverlap':len(AFprimarySeq)}
     
     # Target truncated sequnce, but perfect match for what exists
     elif len(AFprimarySeq) > len(sourceSequence) and sourceSequence in AFprimarySeq:
@@ -61,10 +61,10 @@ def checkAFPDBSequence(sourceSequence, AF_PDB_obj, debug = True):
                 'TruncatedMatch': True,
                 'AFTruncated':False,
                 'SourceTruncated':True,
-                'AFStartResidue': 1, 
-                'AFEndResidue':len(sourceSequence),
-                'SourceStartResidue':1, 
-                'SourceEndResidue':len(sourceSequence)}
+                'AFStartResidueOverlap': 1, 
+                'AFEndResidueOverlap':len(sourceSequence),
+                'SourceStartResidueOverlap':1, 
+                'SourceEndResidueOverlap':len(sourceSequence)}
     # Fuzzy Matching - TODO
     # No Match
     else:
@@ -152,10 +152,10 @@ def utility_getNoPDBDict():
             'TruncatedMatch': False,
             'AFTruncated':False,
             'SourceTruncated':False,
-            'AFStartResidue': 0, 
-            'AFEndResidue': 0,
-            'SourceStartResidue': 0, 
-            'SourceEndResidue': 0}
+            'AFStartResidueOverlap': 0, 
+            'AFEndResidueOverlap': 0,
+            'SourceStartResidueOverlap': 0, 
+            'SourceEndResidueOverlap': 0}
 
 def utility_getNoSequenceMathcDict():
     return utility_getNoPDBDict()
